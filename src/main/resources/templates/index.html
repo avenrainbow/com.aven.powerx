@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+
+    <!-- Bootstrap -->
+    <link href="/bootstrap-3.3.7-dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- jQuery (Bootstrap 的所有 JavaScript 插件都依赖 jQuery，所以必须放在前边) -->
+    <script src="/jQuery/jquery-1.12.4.min.js"></script>
+    <!-- 加载 Bootstrap 的所有 JavaScript 插件。你也可以根据需要只加载单个插件。 -->
+    <script src="/bootstrap-3.3.7-dist/js/bootstrap.min.js"></script>
+
+    <!-- 加载 自定义插件。 -->
+    <script src="/custom/zy_tmpl.js"></script>
+
+</head>
+<body>
+
+    <!--弹出框-->
+    <div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                    <h4 class="modal-title">添加主机</h4>
+                </div>
+                <div class="modal-body">
+
+                    通过IPMI添加物理主机到当前数据中心管理，对物理主机是否进行了虚拟化无任何要求，只需物理主机具备IPMI的硬件基础。
+
+                    <form>
+                        <div class="form-group">
+                            <label >主机名称</label>
+                            <input class="form-control" id="ipmi_host_add_hostName" >
+                        </div>
+                        <div class="form-group">
+                            <label >IP地址</label>
+                            <input class="form-control" id="ipmi_host_add_ipmiIp" >
+                        </div>
+                        <div class="form-group">
+                            <label >用户名</label>
+                            <input class="form-control" id="ipmi_host_add_ipmiName" >
+                        </div>
+                        <div class="form-group">
+                            <label >秘密</label>
+                            <input class="form-control" id="ipmi_host_add_ipmiPassword" >
+                        </div>
+                    </form>
+
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+                    <button type="button" class="btn btn-primary" onclick="addIPMIHost();">提交</button>
+                </div>
+            </div><!-- /.modal-content -->
+        </div><!-- /.modal -->
+    </div>
+
+    <!--弹出框-->
+    <div class="modal fade" id="myModal2" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                    <h4 class="modal-title" >修改主机</h4>
+                </div>
+                <div class="modal-body">
+
+                    <form>
+                        <span style="display:none;"><input type="text" id="ipmi_host_edit_id"></span>
+                        <div class="form-group">
+                            <label >主机名称</label>
+                            <input class="form-control" id="ipmi_host_edit_hostName" >
+                        </div>
+                        <div class="form-group">
+                            <label >IP地址</label>
+                            <input class="form-control" id="ipmi_host_edit_ipmiIp" >
+                        </div>
+                        <div class="form-group">
+                            <label >用户名</label>
+                            <input class="form-control" id="ipmi_host_edit_ipmiName" >
+                        </div>
+                        <div class="form-group">
+                            <label >秘密</label>
+                            <input class="form-control" id="ipmi_host_edit_ipmiPassword" >
+                        </div>
+                    </form>
+
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+                    <button type="button" class="btn btn-primary" onclick="editIPMIHost();">提交</button>
+                </div>
+            </div><!-- /.modal-content -->
+        </div><!-- /.modal -->
+    </div>
+
+
+
+    <div class="row">
+        <div class="col-xs-9">
+            <h1>服务器列表</h1>
+        </div>
+        <div class="col-xs-4">
+            <div>
+                <button data-toggle="modal" data-target="#myModal" class="btn btn-default" type="submit" onclick="initAddPage();">创建</button>
+                <button data-toggle="modal" data-target="#myModal2" class="btn btn-default" type="submit" onclick="initEditPage();">修改</button>
+                <button class="btn btn-default" type="submit" onclick="removeIPMIHost();">移除</button>
+                <table class="table table-bordered table-hover">
+                    <thead>
+                    <tr>
+                        <th></th>
+                        <th>主机名称</th>
+                        <th>IP地址</th>
+                    </tr>
+                    </thead>
+                    <tbody id="ipmi_host_list_template" style="display:none">
+                    <tr onclick="ipmi_host_list_check(#{id});">
+                        <td><input type="radio"  id="ipmi_host_check_id_#{id}" name="ipmi_host_check_radio" value=#{id}></td>
+                        <td><a href="info?ipmiHostId=#{id}&hostName=#{hostName}">#{hostName}</a></td>
+                        <td>#{ipmiIp}</td>
+                    </tr>
+                    </tbody>
+                    <tbody id="ipmi_host_list"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script type="text/javascript">
+
+
+
+
+        initIPMIHostIndexPage();
+
+        function initIPMIHostIndexPage(){
+            getIPMIHostList();
+        }
+
+        var ipmiHostList = [];
+
+        function getIPMIHostList(){
+             $.ajax({
+                url:"/ipmi",
+                dataType:"json",
+                type:"GET",
+                success:function(data, textStatus){
+                    loadIPMIHostList(data);
+                }
+            });
+        }
+
+        function loadIPMIHostList(data){
+            ipmiHostList = data.hosts;
+            $("#ipmi_host_list").html("");
+            var n = $("#ipmi_host_list_template").html();
+            $("#ipmi_host_list").append(zy_tmpl_e(n,data.hosts,zy_tmpl_count(data.hosts)));
+        }
+
+        function addIPMIHost(){
+            var ipmiHost = {};
+            ipmiHost.hostName = $("#ipmi_host_add_hostName").val();
+            ipmiHost.ipmiIp = $("#ipmi_host_add_ipmiIp").val();
+            ipmiHost.ipmiName = $("#ipmi_host_add_ipmiName").val();
+            ipmiHost.ipmiPassword = $("#ipmi_host_add_ipmiPassword").val();
+
+            $.ajax({
+                url:"/ipmi",
+                dataType:"json",
+                type:"POST",
+                data:JSON.stringify(ipmiHost),
+                contentType:"application/json;charset=utf-8",
+                success:function(data, textStatus){
+                    getIPMIHostList();
+                }
+            });
+
+            $('#myModal').modal("hide");
+        }
+
+        function editIPMIHost(){
+            var ipmiHost = {};
+            ipmiHost.hostName = $("#ipmi_host_edit_hostName").val();
+            ipmiHost.ipmiIp = $("#ipmi_host_edit_ipmiIp").val();
+            ipmiHost.ipmiName = $("#ipmi_host_edit_ipmiName").val();
+            ipmiHost.ipmiPassword = $("#ipmi_host_edit_ipmiPassword").val();
+
+            var hostId = $("#ipmi_host_edit_id").val();
+            $.ajax({
+                url:"/ipmi/"+hostId,
+                dataType:"json",
+                type:"PUT",
+                data:JSON.stringify(ipmiHost),
+                contentType:"application/json;charset=utf-8",
+                success:function(data, textStatus){
+                    getIPMIHostList();
+                }
+            });
+
+            $('#myModal2').modal("hide");
+
+
+        }
+
+        function initAddPage(){
+            $("#ipmi_host_add_hostName").val("");
+            $("#ipmi_host_add_ipmiIp").val("");
+            $("#ipmi_host_add_ipmiName").val("");
+            $("#ipmi_host_add_ipmiPassword").val("");
+        }
+
+        function initEditPage(){
+            var checkedId = $("input[name='ipmi_host_check_radio']:checked").val();
+            for(var i=0;i<ipmiHostList.length;i++){
+                var ipmiHost = ipmiHostList[i];
+                if(String(ipmiHost.id) == checkedId){
+                    $("#ipmi_host_edit_id").val(ipmiHost.id);
+                    $("#ipmi_host_edit_hostName").val(ipmiHost.hostName);
+                    $("#ipmi_host_edit_ipmiIp").val(ipmiHost.ipmiIp);
+                    $("#ipmi_host_edit_ipmiName").val(ipmiHost.ipmiName);
+                    $("#ipmi_host_edit_ipmiPassword").val(ipmiHost.ipmiPassword);
+                    break;
+                }
+            }
+        }
+
+        function removeIPMIHost(){
+             if(confirm("确认要删除选择的数据吗？")){
+			         var hostId = $("input[name='ipmi_host_check_radio']:checked").val();
+                     $.ajax({
+                            url:"/ipmi/"+hostId,
+                            dataType:"json",
+                            type:"DELETE",
+                            contentType:"application/json;charset=utf-8",
+                            success:function(data, textStatus){
+                                getIPMIHostList();
+                            }
+                     });
+			 }
+
+        }
+
+        function ipmi_host_list_check(id){
+            $('#ipmi_host_check_id_'+id).prop("checked", "checked");
+        }
+
+
+    </script>
+</body>
+</html>

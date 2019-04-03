@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+
+    <!-- Bootstrap -->
+    <link href="/bootstrap-3.3.7-dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- jQuery (Bootstrap 的所有 JavaScript 插件都依赖 jQuery，所以必须放在前边) -->
+    <script src="/jQuery/jquery-1.12.4.min.js"></script>
+    <!-- 加载 Bootstrap 的所有 JavaScript 插件。你也可以根据需要只加载单个插件。 -->
+    <script src="/bootstrap-3.3.7-dist/js/bootstrap.min.js"></script>
+
+</head>
+<body>
+    <div class="col-xs-9">
+        <h1>服务器详情[<span th:text="${hostName}"></span>]</h1>
+        <br/>
+        <a href="index"><button class="btn btn-default" type="submit" >返回</button></a>
+        <button class="btn btn-default" type="submit" onclick="getIPMIHostInfo();">刷新</button>
+    </div>
+    <div style="display:none;" id="ipmi_host_info" th:text="${ipmiHostId}"></div>
+    <div class="col-xs-6 col-sm-4">
+        <h4>基本信息</h4>
+        <ul>
+            <li>主机名称：<span id="ipmi_host_info_hostName"></span></li>
+            <li>IP地址：<span id="ipmi_host_info_ipmiIp"></span></li>
+            <li>主机状态：<span id="ipmi_host_info_hostState"></span></li>
+            <li>厂商：<span id="ipmi_host_info_hostManufacturer"></span></li>
+            <li>序列号：<span id="ipmi_host_info_hostSNId"></span></li>
+        </ul>
+    </div>
+    <div class="col-xs-6 col-sm-4">
+        <h4>硬件信息</h4>
+        <ul id="ipmi_host_info_sdr">
+        </ul>
+    </div>
+
+    <div class="modal fade" id="loadingModal">
+        <div style="width: 200px;height:20px; z-index: 20000; position: absolute; text-align: center; left: 50%; top: 50%;margin-left:-100px;margin-top:-10px">
+            <div class="progress progress-striped active" style="margin-bottom: 0;">
+                <div class="progress-bar" style="width: 100%;"></div>
+            </div>
+            <h5 style="color:black"> <strong>正在加载...</strong> </h5>
+        </div>
+    </div>
+
+    <script type="text/javascript">
+
+        var ipmiHostId = $("#ipmi_host_info").html();
+
+        initIPMIHostInfoPage();
+
+        function initIPMIHostInfoPage(){
+            getIPMIHostInfo();
+        }
+
+        function getIPMIHostInfo(){
+            $("#loadingModal").modal('show');
+             $.ajax({
+                url:"/ipmi/"+ipmiHostId,
+                dataType:"json",
+                type:"GET",
+                success:function(data, textStatus){
+                    loadIPMIHostInfo(data);
+                    $("#loadingModal").modal('hide');
+                },
+                error: function(XMLHttpRequest, textStatus, errorThrown) {
+                    alert("获取失败！")
+                    $("#loadingModal").modal('hide');
+                }
+            });
+        }
+
+        function loadIPMIHostInfo(data){
+            $("#ipmi_host_info_hostName").html(data.hostName);
+            $("#ipmi_host_info_ipmiIp").html(data.ipmiIp);
+            $("#ipmi_host_info_hostState").html(data.hostState);
+            $("#ipmi_host_info_hostManufacturer").html(data.hostManufacturer);
+            $("#ipmi_host_info_hostSNId").html(data.hostSNId);
+            var sdrs = "";
+            if(data.sensorReadings){
+                var sensorReadings = data.sensorReadings;
+                for(var key in sensorReadings){
+                    var sdr = "<li>" + key + "：<span>" + sensorReadings[key] + "</span></li>"
+                    sdrs = sdrs + sdr;
+                }
+            }
+            $("#ipmi_host_info_sdr").html(sdrs);
+        }
+
+    </script>
+</body>
+</html>

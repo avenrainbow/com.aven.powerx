@@ -1,0 +1,17 @@
+#1
+[将spring boot项目成jar包，并把配置文件等放在jar包外部]
+
+maven-jar-plugin：负责将应用程序打包成可执行的jar文件
+maven-assembly-plugin：负责将整个项目按照自定义的目录结构打成最终的压缩包，方便实际部署
+
+可以看到，已经将application.properties和config下的properties文件放在jar包外了。但是这里需要注意的是：我们现在只是将配置文件打包在jar包外，实际jar包里面还有一份，jar包运行的时候实质还是执行的jar包里面的配置文件，现在修改外面的配置文件是没有用的。那我们为什么还要打包出来呢？实际上我们可以通过在pom.xml文件添加配置将jar包里面的配置删掉。但是，这样做如果程序本身在开发的时没有将配置路径写成外部路径的话会报错导致程序无法运行的。所以我更推荐通过命令指定程序运行时执行外部配置文件，当不执行命令参数时，程序会执行jar包里面的配置正常运行。执行命令参数如下：
+
+java -jar -Dspring.config.location=%cd%\application.properties -Dlogging.path=%cd%\log %cd%\xxx.jar
+
+%d%:表示当前application.properties所在的目录路径（需要自行修改成自己的路径）
+
+xxx.jar:表示自己的jar包名字
+
+-Dspring.config.location:指定spring运行时执行的config路径，这里指我们的application.properties文件所在路径
+
+-Dlogging.path:指定日志文件存放路径（根据自己需求填写）
