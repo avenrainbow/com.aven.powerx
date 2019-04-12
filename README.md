@@ -1,5 +1,10 @@
-虚拟化平台管理 PowerX v0.1
+虚拟化平台管理引擎 PowerX v0.1
 ===
+
+2019/4/12 v0.1.1
+---
+添加vsphere-automation-sdk-java支持<br>
+支持获取vCenter指定datacenter信息<br>
 
 2019/4/3 v0.1
 ---
