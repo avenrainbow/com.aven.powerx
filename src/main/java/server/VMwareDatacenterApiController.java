@@ -8,10 +8,13 @@ import org.springframework.web.bind.annotation.*;
 
 import server.handler.VMwareDatacenterHandler;
 
-
+/**
+ *  vSphere datacenter操作接口
+ */
 @RestController
 @RequestMapping(value = "/vmware/datacenters")
-public class VMwareDatacenterApiontroller {
+public class VMwareDatacenterApiController {
+
 
     @Autowired
     private VMwareDatacenterHandler vMwareDatacenterHandler = new VMwareDatacenterHandler();

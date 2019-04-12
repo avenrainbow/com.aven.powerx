@@ -15,7 +15,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping(value = "/ipmi")
-public class IPMIHostApiontroller {
+public class IPMIHostApiController {
 
     @Resource
     public IPMIHostService ipmiHostService;
